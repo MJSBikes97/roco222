@@ -1,8 +1,9 @@
-# my first lab Journal (25/09)
+# My First Lab Journal (25/09)
 ## Introduction
 
 This journal is written using the markdown syntax.
-Markdown allows formatting of Rich text using syntax in a plain text editor.
+Markdown allows formatting of rich text using syntax in a plain text editor.
+As seen below, hashtags are used to create various sizes of header (more hastags gives a smaller header) and asterisks are used to create bullet-lists.
 
 ## Command line 101
 
