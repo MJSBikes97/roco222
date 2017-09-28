@@ -44,3 +44,11 @@ As seen below, hashtags are used to create various sizes of header (more hastags
 ### cat /proc/cpuinfo
 * returns info abou the machine's CPU
 
+## Uploading to GitHub Repository
+
+## Hacking into the Robot
+Knowing that the robot's name was Chapman, we used the terminal commang "ping chapman" to retrieve the IP adress for the robot.
+
+With the IP address, using the command "ssh nao@192.168.0.184" we established an SSH connection to the robot using the password "nao"
+
+Using the GNU nano text editor we copied the python program to the robot, saving it as a .py file to run on the robot.
