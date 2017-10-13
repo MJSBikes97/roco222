@@ -52,3 +52,29 @@ Knowing that the robot's name was Chapman, we used the terminal commang "ping ch
 With the IP address, using the command "ssh nao@192.168.0.184" we established an SSH connection to the robot using the password "nao"
 
 Using the GNU nano text editor we copied the python program to the robot, saving it as a .py file to run on the robot.
+
+#Building the DC Motor
+
+##The initial motor design
+I began by attempting to build a motor using the provided materials. As a slight improvement to those shown in the lab notes, I decided to add a second coil to reduce cogging of the motor. 
+
+I wound each coil with the minimum 60 turns and recorded equal coil resistances of 5 ohms per coil.
+
+![1st Armature](/IMG-20171005-WA0001.jpg)
+
+Unfortunately, the armature I had constructed had a fatal flaw, as the cork used had holes for the motor shaft which were not concentric; resulting in violent eccentric motion when spun. I therefore opted to abandon this design and move to an improved method of construction.
+
+##Motor v2 - Lego
+In order to rapidly prototype a more reliable motor, I decided to use lego technic components to construct my armature. The shaft parts are easily dissasembled and very 'tweakable', making them ideal for finely adjusting the motor. 
+
+Also, unlike a 3D-Printed prototype, a lego design is not limited by the long print times; The protoype could be completely rebuilt in minutes.
+
+As a first prototype, I produced a single coil armature with only 60 turns and an average diameter of 35mm. This was connected to a separate commutator.
+
+![Motor V2](/IMG-20171012-WA0000.jpg)
+
+The brushes are a spring-arm design that have copper tape contacts on the end with connecting leads soldered to them. I have found during extended running periods that these contacts wear out very quickly; a design change will be needed.
+
+![Brushes](/IMG-20171012-WA0002.jpg)
+
+I found that with some light lubrication, this motor runs at a very stable RPM for extended periods, however, I feel that greater reliability and performance may be gained from adding a second coil.
