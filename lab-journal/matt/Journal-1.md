@@ -78,3 +78,15 @@ The brushes are a spring-arm design that have copper tape contacts on the end wi
 ![Brushes](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG-20171012-WA0002.jpg)
 
 I found that with some light lubrication, this motor runs at a very stable RPM for extended periods, however, I feel that greater reliability and performance may be gained from adding a second coil.
+
+## Motor v3 - Further Improvements
+
+After the structural limits of the lego motor were accidentally realised (in other words, I dropped it) I decided to implement some further improvements over the original design. These included an additional 60-turn coil a 90-degrees to the existing one and brushes made from exposed wire-ends rather than copper tape.
+
+I also repositioned the brushes so they both trail in the direction of rotation to reduce drag on the commumtator and improve efficiency.
+
+The remainder of the construction was broadly the same as before.
+
+## Adding the Incremental Encoder
+
+I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc to give input to the encoder.
