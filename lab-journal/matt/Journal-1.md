@@ -90,3 +90,15 @@ The remainder of the construction was broadly the same as before.
 ## Adding the Incremental Encoder
 
 I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc to give input to the encoder.
+
+# Stepper Motor Control
+
+Having wired the stepper motor to the Arduino motor shield as per the Lab Sheet I programmed the Arduino with a code similar to the example given in lectures but with a few functions included to compact the main loop and simplify the later tasks.
+
+The motor operated successfully and I was able to adjust its speed by varying the step delay constant in the program.
+
+## Multi-Mode Operation
+I produced a separate function for each mode (apart from microstepping) which used the same functions as the main loop for the previous code. I then tested each function with the motor to observe the physical differences between the modes.
+
+## Microstepping
+
