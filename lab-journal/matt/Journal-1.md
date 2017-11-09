@@ -102,3 +102,87 @@ I produced a separate function for each mode (apart from microstepping) which us
 
 ## Microstepping
 
+
+# Servo Arm Project
+
+## First Steps - Interfacing Servos to the Arduino
+### Initial testing
+
+The first test code I wrote to control the Servo Motors from the Arduino used the Arduino Servo library and two 'for' loops to iterate the angle output to the servos between 0 and 180, then from 180 back to 0, allowing the servos to sweep through their full operating range. A simple blocking delay was added in the loops to change the rate of the sweep.
+
+```
+/*### 2-Servo Control Test ###*/
+//Servo Library Definitions
+#include <Servo.h>
+Servo actuator_1;
+Servo actuator_2;
+#define actuator_1_pin 9
+#define actuator_2_pin 10
+
+//Standard Delay Time
+int loop_delay_ms = 10;
+
+void setup() {
+  actuator_1.attach(actuator_1_pin,700,2000);
+  actuator_2.attach(actuator_2_pin,700,2000);
+
+}
+
+void loop() {
+  for (int n=0; n<=180; n++) {
+    actuator_1.write(n);
+    actuator_2.write(180-n);
+    delay(loop_delay_ms);
+  }
+  for(int n=180; n>=0; n--) {
+    actuator_1.write(n);
+    actuator_2.write(180-n);
+    delay(loop_delay_ms);
+  }
+}
+
+```
+
+This code does not give a smooth sinusoidal movement of the servo shaft, however it does allow the servos to be quickly tested.
+
+### Controlling the servos with potentiometers
+
+To control the servos with potentiometers I once again used the Arduino servo library and the Arduino 'map' function. This allowed me to map the ADC inputs of 0 to 1023 to the 0 to 180 degree values of the 'servo.write' function. I also set up the USB serial monitor to confirm the ADC values were being recieved correctly.
+A blocking delay of 1ms was added to the loop to allow the values on the monitor to be read more easily.
+
+```
+/*### Potentiometer 2-Servo Control ###*/
+//Servo Library Definitions
+#include <Servo.h>
+Servo actuator_1;
+Servo actuator_2;
+#define actuator_1_pin 9
+#define actuator_2_pin 10
+
+//Analog In Pin Definitions
+#define act_1_ctrl A0
+#define act_2_ctrl A1
+//Standard Delay Length
+int loop_delay_ms = 1;
+//Serial Definitions
+#define PC_baud 9600
+
+/*## Setup ## */
+void setup() {
+//Attach Servos
+actuator_1.attach(actuator_1_pin,700,2000);
+actuator_2.attach(actuator_2_pin,700,2000);
+Serial.begin(PC_baud);
+}
+/*## Main Loop ##*/
+void loop() {
+  actuator_1.write(map(analogRead(act_1_ctrl), 0, 1023, 0, 180));
+  Serial.println(analogRead(act_1_ctrl));
+  actuator_2.write(map(analogRead(act_2_ctrl), 0, 1023, 0, 180));
+  Serial.println(analogRead(act_2_ctrl));
+  delay(loop_delay_ms);
+
+}
+```
+
+
