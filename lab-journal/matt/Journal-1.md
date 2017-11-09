@@ -94,7 +94,8 @@ I soldered the encoder board as per the Lab Sheet and tested its output using an
 # Stepper Motor Control
 
 Having wired the stepper motor to the Arduino motor shield as per the Lab Sheet I programmed the Arduino with a code similar to the example given in lectures but with a few functions included to compact the main loop and simplify the later tasks.
-
+![Stepper Motor Wiring](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171102_112640.jpg)
+![Full Stepper Motor Arrangement](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171102_112632.jpg)
 The motor operated successfully and I was able to adjust its speed by varying the step delay constant in the program.
 
 ## Multi-Mode Operation
@@ -142,7 +143,8 @@ void loop() {
 }
 
 ```
-
+The servos were wired up using a breadboard to allow use of common power rails for both servos.
+![Servo Setup on Breadboard](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171109_113049.jpg)
 This code does not give a smooth sinusoidal movement of the servo shaft, however it does allow the servos to be quickly tested.
 
 ### Controlling the servos with potentiometers
@@ -184,5 +186,7 @@ void loop() {
 
 }
 ```
-
+I set up the 2 Potentiometers on a breadboard as shown below for testing the code:
+![Dual Potentiometer Control](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171109_124655.jpg)
+![Potentiometer Wiring](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171109_124645.jpg)
 
