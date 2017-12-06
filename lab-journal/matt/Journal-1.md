@@ -87,9 +87,22 @@ I also repositioned the brushes so they both trail in the direction of rotation 
 
 The remainder of the construction was broadly the same as before.
 
+## Motor v4 - Self-Starting and Improved Brushes
+
+To improve the  motor performance I decided to add a third coil. This allowed the motor to be self starting as a certain percentage of the maximum force applied to the coils is always applied to 2 of the 3 coils.
+
+The arrangement of the coils is such that two coils are connected in series between the poles of the commutator. The position of the magnets was also adjusted due to the reduction in the OD of the coil rotor. Each coil has a turn count of 80 and are separated at 120 degree increments.
+
+This motor also uses exposed multicore wire 
+
+Testing showed that this motor had significantly improved performance compared to the 2-Coil motor. 
+
+
 ## Adding the Incremental Encoder
 
 I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc to give input to the encoder.
+
+## Speed Measurement
 
 # Stepper Motor Control
 
@@ -189,4 +202,8 @@ void loop() {
 I set up the 2 Potentiometers on a breadboard as shown below for testing the code:
 ![Dual Potentiometer Control](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171109_124655.jpg)
 ![Potentiometer Wiring](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171109_124645.jpg)
+
+## Controlling the Robot Arm with ROS
+
+Having successfully installed ROS and tested the /test topic echo using the terminal I loaded the Arduino Script to the UNO board and tested the Servo topic
 
