@@ -205,5 +205,37 @@ I set up the 2 Potentiometers on a breadboard as shown below for testing the cod
 
 ## Controlling the Robot Arm with ROS
 
-Having successfully installed ROS and tested the /test topic echo using the terminal I loaded the Arduino Script to the UNO board and tested the Servo topic
+Having successfully installed ROS and tested the /test topic echo using the terminal I loaded the Arduino Script to the UNO board and tested the Servo topic.
+The Arduino script is as follows:
+
+```
+#include <ros.h>
+#include <std_msgs/UInt16.h>
+#include <Servo.h>
+
+using namespace ros;
+
+NodeHandle nh;
+Servo servo1;
+
+void cb( const std_msgs::UInt16& msg) {
+  servo1.write(msg.data); //Writes between 0 and 180
+}
+
+Subscriber <std_msgs::UInt16> sub("servo", cb);
+
+void setup() {
+  nh.initNode();
+  nh.subscribe(sub);
+  servo1.attach(9);
+}
+
+void loop() {
+  nh.spinOnce();
+  delay(1);
+}
+```
+The function defined at line 10 (void cb) is a function to describe what the ROS Topic does with the message it recieves from the the rosserial topic.
+The object 'Subscriber' subscribes the Arduino to the topic "servo" with the message cb. Hence when a message is published on the topic servo, the Arduino updates the servo to reflect the contents of the message. 
+
 
