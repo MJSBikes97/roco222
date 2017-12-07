@@ -205,6 +205,8 @@ I set up the 2 Potentiometers on a breadboard as shown below for testing the cod
 
 ## Controlling the Robot Arm with ROS
 
+### ROS Node for the Arduino
+
 Having successfully installed ROS and tested the /test topic echo using the terminal I loaded the Arduino Script to the UNO board and tested the Servo topic.
 The Arduino script is as follows:
 
@@ -237,5 +239,8 @@ void loop() {
 ```
 The function defined at line 10 (void cb) is a function to describe what the ROS Topic does with the message it recieves from the the rosserial topic.
 The object 'Subscriber' subscribes the Arduino to the topic "servo" with the message cb. Hence when a message is published on the topic servo, the Arduino updates the servo to reflect the contents of the message. 
+
+### Using RViz and URDF
+
 
 
