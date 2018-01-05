@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot name="roco_arm">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.045" radius="0.085"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="arm_turret">
+    <visual>
+      <geometry>
+        <cylinder length="0.025" radius="0.068"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0" />
+    </visual>
+  </link>
+
+  <link name="first_segment">
+    <visual>
+      <geometry>
+        <box size="0.095 0.032 0.032"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.0475 0 0" />
+    </visual>
+  </link>
+
+  <link name="second_segment">
+    <visual>
+      <geometry>
+        <box size="0.075 0.032 0.032"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.0375 0 0" />
+    </visual>
+  </link>
+
+  <link name="grabber_1">
+     <visual>
+       <geometry>
+         <box size="0.045 0.005 0.005"/>
+       </geometry>
+       <origin rpy="0 0 0" xyz="-0.0175 0 0" />
+     </visual>
+  </link>
+
+ <joint name="turret_swivel" type="continuous">
+    <axis xyz="0 0 1" />
+    <parent link="base_link"/>
+    <child link="arm_turret"/>
+    <origin xyz="0 0 0.0175" />
+  </joint>
+
+  <joint name="turret_to_first" type="revolute">
+    <axis xyz="0 1 0" />
+    <limit effort="1000" lower="0" upper="3.14" velocity="0.1" />
+    <parent link="arm_turret"/>
+    <child link="first_segment"/>
+    <origin xyz="0 0 0.025" />
+  </joint>
+
+  <joint name="first_to_second" type="revolute">
+     <axis xyz="0 1 0" />
+     <limit effort="1000" lower="-1.57" upper="1.57" velocity="0.1" />
+     <parent link="first_segment"/>
+     <child link="second_segment"/>
+     <origin xyz="-0.095 0 0" />
+  </joint>
+
+  <joint name="second_to_grabber" type="revolute">
+     <axis xyz="0 1 0" />
+     <limit effort="1000" lower="0" upper="3.14" velocity="0.1" />
+     <parent link="second_segment"/>
+     <child link="grabber_1"/>
+     <origin xyz="-0.075 0 0" />
+  </joint>
+
+</robot>

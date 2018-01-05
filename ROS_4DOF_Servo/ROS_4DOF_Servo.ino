@@ -6,39 +6,43 @@
 using namespace ros;
 #define stepper_step 5
 #define stepper_direction 4
-#define stepper_enable 8
+#define stepper_enable 3
 NodeHandle nh;
 Servo servo1;
 Servo servo2;
+Servo servo3;
 int count = 0;
 int target_count = 0;
 //int sample;
 
 //Callback Function: writes joint_state angle to the servo
 void cb( const sensor_msgs::JointState& msg) {
-  int angle[3];
+  int angle[4];
   //Calculate angle in deg. from ROS message
   
     angle[0] = map((msg.position[0]*(180 / 3.14)), -180, 180, -1600, 1600);
     angle[1] = (msg.position[1]*(180/3.14));
     angle[2] = map((msg.position[2]*(180/3.14)), -90, 90, 0, 180);
+    angle[3] = (msg.position[3]*(180/3.14));
+    if (angle[0] != target_count) {
+      target_count = angle[0];
+    }
     if(target_count > count) {
       digitalWrite(stepper_direction, HIGH);
     }
     if(target_count < count) {
       digitalWrite(stepper_direction, LOW);
     }
-    if (angle[0] != target_count) {
-      target_count = angle[0];
-    }
+   
     servo1.write(angle[1]); //Writes between 0 and 180
     servo2.write(angle[2]);
+    servo3.write(angle[3]);
 }
 
 Subscriber <sensor_msgs::JointState> sub("joint_states", cb);
 
 void setup() {
-  //Serial.begin(9600);
+  nh.getHardware()->setBaud(115200);
   pinMode(stepper_step, OUTPUT);
   pinMode(stepper_direction, OUTPUT);
   noInterrupts();
@@ -53,6 +57,7 @@ void setup() {
   nh.subscribe(sub);
   servo1.attach(6);
   servo2.attach(7);
+  servo3.attach(8);
 }
 
 ISR(TIMER3_OVF_vect) {
