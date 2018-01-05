@@ -242,5 +242,40 @@ The object 'Subscriber' subscribes the Arduino to the topic "servo" with the mes
 
 ### Using RViz and URDF
 
+![Screenshot of RViz and the Joint State Publisher running](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Screenshot%20from%202017-12-07%2011-38-44.png)
+
+Shown in this screenshot is a single-joint URDF model running in RViz with the Joint state Publisher node UI. I used this to test the operation of these ROS components using the example URDF file before creating my own URDF for my arm design.
+
+My arm was intended to have 4 degrees of freedom; 2 revolute joints for the arm segments, 1 for the grabber at the end of the arm and a single continuous turret joint with a stepper motor. This requires the URDF model to have 5 segments (including base_link).
+
+Initially, I tested a 2 segment arm with a fixed base to ensure the URDF and servos were behaving as intended when running with RViz and the Arduino node.
+
+It quickly became apparent that having a ROS launch file for all the required nodes would be extremely helpful and would streamline the development process. Hence I produced a launch file including all nodes apart from the rosserial_python node; reason being that I was regularly updating the Arduino code and wanted to be able to stop and start this node separately.
+
+#### The First Arm design - Lego Again
+In order to quickly begin prototyping the arm and its movement I 3D-Printed a set of 3 lego adapters for the 9g servos, consisting of a brick and a shaft adapter, for which I modelled the spline of the servo.
+
+The adapters allowed me to attach lego gears to the servo directly in order to move parts of the lego arm. Pictures of the lego arm are shown below:
+
+Issues with the mass of the arm segments quickly became apparent, with the servos struggling to make fine positional adjustments due to insufficient torque. Despite this, I was able to produce an accurate URDF for the first 2 segments and the base stepper of this arm. This allowed me to test the ROS Node on the Arduino with the servos in position and begin programming the stepper motor functionality.
+
+#### The 3D-Printed Arm - A better solution
+To resolve the issues of lack of torque in the servos I decided to produce a more lightweight design that could be 3d printed. This design would also allow me to add the 3rd servo for the grabber attached to the end of the arm.
+
+A few reprints of parts for the design were required. The main issues initially encountered were the attachment of the servo to the turret, where the shaft on the arm segment could not be positioned due to a lack of clearance. This issue was solved by splitting the saddle where the shaft sits and adding a cap to keep the shaft in position. Also the teeth on the grabber gears were far too fine for the 3D-Printer and as a result would not engage and operate properly. I reprinted these with a coarser tooth pattern and a 20-degree helix angle to keep the gears engaged and prevent slippage.
+#### Programming for Stepper Motor Joint
+Adding additional servos to the Arduino was a relatively simple process thanks to the Servo library; simply writing a different value from the Joint State Publisher message array onto the PWM pin for the servo. The stepper motor, however, was a considerably more involved to implement.
+
+Initially, I opted to use a basic motor driver shield that I had for my Arduino, which used and L298p H-bridge like the official Arduino shields. The board was the same as that which I had used for the microstepping development task. This presented a problem due to the rate at which the stepper motor must be written to whilst microstepping in order to operate correctly. The number of writes and delays between the writes was slowing down the ROS callback function to the extent that the servo response to the joint state publisher would be very delayed and jerky. I had to find an alternative solution.
+
+As I was using an Arduino ATmega2560-based development board I decided to use some of its additional hardware timers that are not used by the Servo.h library to generate a timer interrupt for stepping the motor. To make the interrupt rountine simpler I also switched to a different motor driver board specifically for driving stepper motors. It has two input pins from the Arduino; a direction pin and a step pin. The step pin will respond to a rising edge of a digital write.
+
+Using the timer interrupt, the stepper could be moved towards a target position whilst the servos were being moved independently, the target being updated by each ROS callback function. Hence the issue with the stepper preventing the servos from updated was resolved.
+
+The A4988 Stepper Driver used in this board has 3 mode select pins and a current limiting potentiometer. For the purpose of this arm I set the current limit to 500mA and connected all the mode pins high so that a 16 microstep-per-step resolution was set. This required mapping of the Joint_State message value to between -1600 and 1600 as the motor has 200 steps-per-revolution. The Arduino sketch for the node is shown below:
+
+#### Adding the Grabber Joint and Issues with Serial connection speed
+Having successfully added the stepper motor with the initial 2 servos I ran into a new problem. When adding a 4th joint to the URDF to actuate the grabber servo, the arm became unresponsive. The default baud rate for the rosserial_python node is 57600bps. This may mean that the Joint messages are not being sent fast enough to transfer all the data before the other nodes update. My solution was to increas the baud rate to 115200bps, which seemed to resolve the issue. 
+
 
 
