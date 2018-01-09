@@ -81,15 +81,16 @@ I found that with some light lubrication, this motor runs at a very stable RPM f
 
 ## Motor v3 - Further Improvements
 
-After the structural limits of the lego motor were accidentally realised (in other words, I dropped it) I decided to implement some further improvements over the original design. These included an additional 60-turn coil a 90-degrees to the existing one and brushes made from exposed wire-ends rather than copper tape.
+After the structural limits of the lego motor were accidentally realised (in other words, I dropped it) I decided to implement some further improvements over the original design. These included an additional 60-turn coil at 90-degrees to the existing one and brushes made from exposed wire-ends rather than copper tape.
 
 I also repositioned the brushes so they both trail in the direction of rotation to reduce drag on the commumtator and improve efficiency.
 
 The remainder of the construction was broadly the same as before.
 
+The additional coils reduced the cogging effect when the motor was operating, however the motor was not self starting. This was because, when powered up, the first coil aligned horizontally with the magnetic field would provide force to move the armature the first 45-degrees, but would then have moved out of the magnetic field. This would cause the motor to stall with both coils at 45-degree angles from the magnetic field due to a lack of armature momentum. The armature would stall before the second coil was connected to the supply by the commutator, hence a manual start was always required by pushing the flywheel connected to the armature.
 ## Motor v4 - Self-Starting and Improved Brushes
 
-To improve the  motor performance I decided to add a third coil. This allowed the motor to be self starting as a certain percentage of the maximum force applied to the coils is always applied to 2 of the 3 coils.
+To improve the  motor performance I decided to add a third coil. This allowed the motor to be self starting as a certain percentage of the maximum force applied to the coils is always applied to 2 of the 3 coils. This means the motor cannot be stalled if 
 ![3-Coil Armature](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_122936.jpg)
 ![Armature Windings](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_122952.jpg)
 The arrangement of the coils is such that two coils are connected in series between the poles of the commutator. The position of the magnets was also adjusted due to the reduction in the OD of the coil rotor. Each coil has a turn count of 80 and are separated at 120 degree increments.
@@ -102,9 +103,57 @@ Testing showed that this motor had significantly improved performance compared t
 ## Adding the Incremental Encoder
 
 I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc to give input to the encoder.
+```
 
+```
 ## Speed Measurement
+To measure the RPM of the motor, I used 10 pulse edges of the encoder and the Arduino millis() function to time the period of 10 rotations. I used the interrupt service routine to increment the rotation counter as well as inverting the LED state as per the previous script.
 
+I then used the main loop to calculate and write the rpm value out on the serial monitor. This would allow closed loop control of the motor later.
+```
+/*#### Encoder RPM Measurement ####*/
+
+const byte ledPin = 13;
+const byte interruptPin = 2;
+
+unsigned long start_time;
+unsigned long stop_time;
+int n = 0;
+unsigned long period;
+unsigned long rpm;
+volatile byte state = LOW;
+
+void setup() {
+pinMode(ledPin, OUTPUT);
+pinMode(interruptPin, INPUT);
+Serial.begin(9600);
+/*### config interrupt callback for every lo-hi transition ###*/
+attachInterrupt(digitalPinToInterrupt(interruptPin), timer,
+RISING);
+}
+
+void loop() {
+  start_time = millis();
+  while (n<=10) {
+    digitalWrite(ledPin, state);
+  }
+  stop_time = millis();
+  period = ((stop_time - start_time)/10);
+  rpm = (60000/period);
+  Serial.println(rpm);
+  n = 0;
+}
+
+void timer() {
+ n++; 
+ state = !state;
+}
+```
+This [link](https://youtu.be/K2EGBEzusm4) is to a video of the encoder and speed measurement script all working, including the oscilloscope trace of the output from the incremental encoder.
+
+## Speed Control with the Arduino
+
+The next step was to use these rpm measurements to develop some sort of closed loop control for the DC motor. This required the use of a L298P motor driver shield for the Arduino.
 # Stepper Motor Control
 
 Having wired the stepper motor to the Arduino motor shield as per the Lab Sheet I programmed the Arduino with a code similar to the example given in lectures but with a few functions included to compact the main loop and simplify the later tasks.
