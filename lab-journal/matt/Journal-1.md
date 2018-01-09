@@ -468,7 +468,9 @@ It quickly became apparent that having a ROS launch file for all the required no
 In order to quickly begin prototyping the arm and its movement I 3D-Printed a set of 3 lego adapters for the 9g servos, consisting of a brick and a shaft adapter, for which I modelled the spline of the servo.
 
 The adapters allowed me to attach lego gears to the servo directly in order to move parts of the lego arm. Pictures of the lego arm are shown below:
-
+![The Lego Arm Design](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181922.jpg)
+![Lego Servo Mounts](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181929.jpg)
+![Turret Stepper](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181931.jpg)
 Issues with the mass of the arm segments quickly became apparent, with the servos struggling to make fine positional adjustments due to insufficient torque. Despite this, I was able to produce an accurate URDF for the first 2 segments and the base stepper of this arm. This allowed me to test the ROS Node on the Arduino with the servos in position and begin programming the stepper motor functionality.
 
 #### The 3D-Printed Arm - A better solution
@@ -479,6 +481,7 @@ A few reprints of parts for the design were required. The main issues initially 
 Adding additional servos to the Arduino was a relatively simple process thanks to the Servo library; simply writing a different value from the Joint State Publisher message array onto the PWM pin for the servo. The stepper motor, however, was a considerably more involved to implement.
 
 Initially, I opted to use a basic motor driver shield that I had for my Arduino, which used and L298p H-bridge like the official Arduino shields. The board was the same as that which I had used for the microstepping development task. This presented a problem due to the rate at which the stepper motor must be written to whilst microstepping in order to operate correctly. The number of writes and delays between the writes was slowing down the ROS callback function to the extent that the servo response to the joint state publisher would be very delayed and jerky. I had to find an alternative solution.
+![The L298P Driver Board](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181936.jpg)
 
 As I was using an Arduino ATmega2560-based development board I decided to use some of its additional hardware timers that are not used by the Servo.h library to generate a timer interrupt for stepping the motor. To make the interrupt rountine simpler I also switched to a different motor driver board specifically for driving stepper motors. It has two input pins from the Arduino; a direction pin and a step pin. The step pin will respond to a rising edge of a digital write.
 
