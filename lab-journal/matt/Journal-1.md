@@ -90,11 +90,12 @@ The remainder of the construction was broadly the same as before.
 ## Motor v4 - Self-Starting and Improved Brushes
 
 To improve the  motor performance I decided to add a third coil. This allowed the motor to be self starting as a certain percentage of the maximum force applied to the coils is always applied to 2 of the 3 coils.
-
+![3-Coil Armature](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_122936.jpg)
+![Armature Windings](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_122952.jpg)
 The arrangement of the coils is such that two coils are connected in series between the poles of the commutator. The position of the magnets was also adjusted due to the reduction in the OD of the coil rotor. Each coil has a turn count of 80 and are separated at 120 degree increments.
-
-This motor also uses exposed multicore wire 
-
+![v4 Motor Internals](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_123156.jpg)
+This motor also uses exposed multicore wire brushes instead of strips of copper tape as this was found to give greater reliability. The copper tape would wear through very quickly and  cause the motor to fail. 
+![v4 Brushes](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_123205.jpg)
 Testing showed that this motor had significantly improved performance compared to the 2-Coil motor. 
 
 
@@ -110,13 +111,224 @@ Having wired the stepper motor to the Arduino motor shield as per the Lab Sheet 
 ![Stepper Motor Wiring](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171102_112640.jpg)
 ![Full Stepper Motor Arrangement](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171102_112632.jpg)
 The motor operated successfully and I was able to adjust its speed by varying the step delay constant in the program.
+```
+/*### Stepper Motor Control ###*/
 
+/*## Definitions ##*/
+
+#define DIR_A 12
+#define DIR_B 13
+#define PWM_A 10
+#define PWM_B 11
+
+#define Fwd HIGH
+#define Rev LOW
+/*## Step Delay ##*/
+
+const int stepDelay_ms = 5;
+
+void setup() {
+/*## PinMode Config ##*/
+pinMode(DIR_A, OUTPUT);
+pinMode(DIR_B, OUTPUT);
+// Turn off Braking for both Channels
+pinMode(8, OUTPUT); digitalWrite(8, LOW);
+pinMode(9, OUTPUT); digitalWrite(9, LOW);
+
+}
+
+void loop() {
+  setDirection(Fwd, Fwd);
+  ch_A_ON();
+  ch_B_OFF();
+  delay(stepDelay_ms);
+
+  ch_A_OFF();
+  ch_B_ON();
+  delay(stepDelay_ms);
+
+  setDirection(Rev, Rev);
+  ch_A_ON();
+  ch_B_OFF();
+  delay(stepDelay_ms);
+
+  ch_A_OFF();
+  ch_B_ON();
+  delay(stepDelay_ms);
+
+}
+/*## Directional Control Function ##*/
+void setDirection(int A, int B) {
+  digitalWrite(DIR_A, A);
+  digitalWrite(DIR_B, B);
+
+}
+/*## CH A Control Functions ##*/
+void ch_A_ON() {
+  analogWrite(PWM_A, 255);
+}
+
+void ch_A_OFF() {
+  analogWrite(PWM_A, 0);
+}
+/*## CH B Control Functions ##*/
+void ch_B_ON() {
+  analogWrite(PWM_B, 255);
+}
+
+void ch_B_OFF() {
+  analogWrite(PWM_B, 0);
+}
+```
 ## Multi-Mode Operation
 I produced a separate function for each mode (apart from microstepping) which used the same functions as the main loop for the previous code. I then tested each function with the motor to observe the physical differences between the modes.
+The functions for the modes are shown below; setup code is broadly the same as the basic test script above.
+```
+/*## Mode Functions ##*/
+void fullStep() {
+    setDirection(Fwd, Fwd);
+  ch_A_ON();
+  ch_B_OFF();
+  delay(stepDelay_ms);
+
+  ch_A_OFF();
+  ch_B_ON();
+  delay(stepDelay_ms);
+
+  setDirection(Rev, Rev);
+  ch_A_ON();
+  ch_B_OFF();
+  delay(stepDelay_ms);
+
+  ch_A_OFF();
+  ch_B_ON();
+  delay(stepDelay_ms);
+}
+
+void doubStep() {
+  setDirection(Fwd,Fwd);
+  ch_A_ON();
+  ch_B_ON();
+  delay(stepDelay_ms);
+
+  setDirection(Rev, Fwd);
+  delay(stepDelay_ms);
+
+  setDirection(Rev,Rev);
+  delay(stepDelay_ms);
+
+  setDirection(Fwd, Rev);
+  delay(stepDelay_ms);
+}
+
+void halfStep() {
+  //1
+  setDirection(Fwd, Fwd);
+  ch_A_ON();
+  ch_B_OFF();
+  delay(stepDelay_ms);
+  //2
+  ch_A_ON();
+  ch_B_ON();
+  delay(stepDelay_ms);
+  //3
+  ch_A_OFF();
+  ch_B_ON();
+  delay(stepDelay_ms);
+  //4
+  setDirection(Rev, Fwd);
+  ch_A_ON();
+  ch_B_ON();
+  delay(stepDelay_ms);
+  //5
+  ch_A_ON();
+  ch_B_OFF();
+  delay(stepDelay_ms);
+  //6
+  setDirection(Rev, Rev);
+  ch_A_ON();
+  ch_B_ON();
+  delay(stepDelay_ms);
+  //7
+  ch_A_OFF();
+  ch_B_ON();
+  delay(stepDelay_ms);
+  //8
+  setDirection(Fwd, Rev);
+  ch_A_ON();
+  ch_A_OFF();
+}
+```
 
 ## Microstepping
+My Microstepping code generates a table of sine and cosine PWM values that can be used in the analogWrite() function in Arduino. The tables are stored as an array, the code then writes the corresponding positions from the arrays to the two coils of the stepper, putting each coil voltage 90 degrees out of phase with each other. By increasing the number of data points in the arrays, the resolution of the microsteps-per-step increases. The code snippet below shows the microstepping routine:
+```
+/*## Definitions ##*/
 
+#define DIR_A 12
+#define DIR_B 13
+#define PWM_A 10
+#define PWM_B 11
+#define ZERO_SWITCH 5
 
+#define Fwd HIGH
+#define Rev LOW
+int usteps = 360;
+float amp = 127;
+int pulseDelay_us = 40;
+int a[360];
+int b[360];
+int idxG = 0;
+
+void writeMotor(int value, int PWM_PIN, int DIR_PIN);
+/*## Step Delay ##*/
+
+//const int stepDelay_ms = 50;
+
+void setup() {
+/*## Sin/Cos Tables ##*/
+for (int i=0; i<usteps; i++) {
+  a[i] = amp*sin(i*2*PI/usteps);
+  b[i] = amp*cos(i*2*PI/usteps);
+}
+/*## PinMode Config ##*/
+pinMode(DIR_A, OUTPUT);
+pinMode(DIR_B, OUTPUT);
+pinMode(ZERO_SWITCH, INPUT);
+// Turn off Braking for both Channels
+pinMode(8, OUTPUT); digitalWrite(8, LOW);
+pinMode(9, OUTPUT); digitalWrite(9, LOW);
+
+}
+
+void loop() {
+  while (digitalRead(ZERO_SWITCH) == HIGH) {
+    writeMotor(a[idxG], PWM_A, DIR_A);
+    writeMotor(b[idxG], PWM_B, DIR_B);
+  
+    idxG++;
+    if (idxG == usteps) {
+      idxG = 0;
+    }
+    delayMicroseconds(pulseDelay_us);
+  }
+  delay(100);
+  analogWrite(PWM_A, 0);
+  analogWrite(PWM_B, 0);
+  delay(2000);
+}
+
+void writeMotor(int value, int PWM_PIN, int DIR_PIN) {
+  int absPWM = abs(value);
+  analogWrite(PWM_PIN, absPWM);
+  if (value > 0) {
+    digitalWrite(DIR_PIN, Fwd);
+  } else {
+    digitalWrite(DIR_PIN, Rev);
+  }
+}
+```
+In this case the microstep resolution is 360 per step. This gives a total of 72000 steps per rotation as the motor has 200 full steps.
 # Servo Arm Project
 
 ## First Steps - Interfacing Servos to the Arduino
@@ -273,9 +485,98 @@ As I was using an Arduino ATmega2560-based development board I decided to use so
 Using the timer interrupt, the stepper could be moved towards a target position whilst the servos were being moved independently, the target being updated by each ROS callback function. Hence the issue with the stepper preventing the servos from updated was resolved.
 
 The A4988 Stepper Driver used in this board has 3 mode select pins and a current limiting potentiometer. For the purpose of this arm I set the current limit to 500mA and connected all the mode pins high so that a 16 microstep-per-step resolution was set. This required mapping of the Joint_State message value to between -1600 and 1600 as the motor has 200 steps-per-revolution. The Arduino sketch for the node is shown below:
+```
+#include <ros.h>
+//Library to describe message datatypes for joint_state topic
+#include <sensor_msgs/JointState.h>
+#include <Servo.h>
 
+using namespace ros;
+#define stepper_step 5
+#define stepper_direction 4
+#define stepper_enable 3
+NodeHandle nh;
+Servo servo1;
+Servo servo2;
+Servo servo3;
+int count = 0;
+int target_count = 0;
+//int sample;
+
+//Callback Function: writes joint_state angle to the servo
+void cb( const sensor_msgs::JointState& msg) {
+  int angle[4];
+  //Calculate target microstep from ROS message
+  angle[0] = map((msg.position[0]*(180 / 3.14)), -180, 180, -1600, 1600);
+  //Calculate joint angles in deg. from ROS message
+  angle[1] = (msg.position[1]*(180/3.14));
+  angle[2] = map((msg.position[2]*(180/3.14)), -90, 90, 0, 180);
+  angle[3] = (msg.position[3]*(180/3.14));
+  //If the target angle is changed, update it for the ISR
+  if (angle[0] != target_count) {
+    target_count = angle[0];
+  }
+  //Compare current position with target to set stepper direction
+  if(target_count > count) {
+    digitalWrite(stepper_direction, HIGH);
+  }
+  if(target_count < count) {
+    digitalWrite(stepper_direction, LOW);
+  }
+ //Write to servos
+  servo1.write(angle[1]); //Writes between 0 and 180
+  servo2.write(angle[2]);
+  servo3.write(angle[3]);
+}
+//Setup ROS Subscriber
+Subscriber <sensor_msgs::JointState> sub("joint_states", cb);
+
+void setup() {
+  nh.getHardware()->setBaud(115200); //Increase baud rate due to message size
+  pinMode(stepper_step, OUTPUT); //Config stepper driver pins
+  pinMode(stepper_direction, OUTPUT);
+  pinMode(stepper_enable, OUTPUT);
+  noInterrupts(); //Disable all interrupts whilst setting up hardware timer
+  TCCR3A = 0; //Count-Compare registers set to 0
+  TCCR3B = 0;
+  TCNT3 = 60000; //Set count value to 60000, max is 65535, hence 5535 clock edges between interrupts
+  TCCR3B |= (1<<CS10); //Clock divded by 8; gives a clock speed for the timer of 2MHz
+  TIMSK3 |= (1<<TOIE1); //Enable overflow interrupt, when timer count exceeds 65535, interrupt occurs
+  interrupts(); //Enable interrupts
+  
+  nh.initNode();
+  nh.subscribe(sub);
+  servo1.attach(6); //Attach servos to appropriate pins
+  servo2.attach(7);
+  servo3.attach(8);
+}
+/*### Timer Interrupt Service Routine ###*/
+ISR(TIMER3_OVF_vect) {
+  TCNT3 = 60000; //Set count to start value 
+  if (count != target_count) { //Compare count value to value output by callback
+    digitalWrite(stepper_enable, LOW); //Enable stepper drivere
+    if(digitalRead(stepper_step) == LOW) { //Invert step pin and increment count based on direction pin
+      digitalWrite(stepper_step,HIGH);
+      if (digitalRead(stepper_direction) == HIGH) {
+        count++;
+      } else {
+        count--;
+      }
+    } else {
+      digitalWrite(stepper_step, LOW);
+    }
+  } else {
+    digitalWrite(stepper_enable, HIGH);  //If the count is equal to target, disable stepper driver
+  }
+}
+
+void loop() {
+  nh.spinOnce();
+  delay(1);
+}
+```
 #### Adding the Grabber Joint and Issues with Serial connection speed
-Having successfully added the stepper motor with the initial 2 servos I ran into a new problem. When adding a 4th joint to the URDF to actuate the grabber servo, the arm became unresponsive. The default baud rate for the rosserial_python node is 57600bps. This may mean that the Joint messages are not being sent fast enough to transfer all the data before the other nodes update. My solution was to increas the baud rate to 115200bps, which seemed to resolve the issue. 
+Having successfully added the stepper motor with the initial 2 servos I ran into a new problem. When adding a 4th joint to the URDF to actuate the grabber servo, the arm became unresponsive. The default baud rate for the rosserial_python node is 57600bps. This may mean that the Joint messages are not being sent fast enough to transfer all the data before the other nodes update. My solution was to increase the baud rate to 115200bps, which seemed to resolve the issue. 
 
 
 
