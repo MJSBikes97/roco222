@@ -460,9 +460,75 @@ Shown in this screenshot is a single-joint URDF model running in RViz with the J
 
 My arm was intended to have 4 degrees of freedom; 2 revolute joints for the arm segments, 1 for the grabber at the end of the arm and a single continuous turret joint with a stepper motor. This requires the URDF model to have 5 segments (including base_link).
 
-Initially, I tested a 2 segment arm with a fixed base to ensure the URDF and servos were behaving as intended when running with RViz and the Arduino node.
+Initially, I tested a 2 segment arm with a fixed base to ensure the URDF and servos were behaving as intended when running with RViz and the Arduino node. The URDF for this arm is shown here:
+```
+<?xml version="1.0"?>
+<robot name="roco_arm">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.06" radius="0.1"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="first_segment">
+    <visual>
+      <geometry>
+        <box size="0.6 0.05 0.1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.3 0 0" />
+    </visual>
+  </link>
+
+  <link name="second_segment">
+    <visual>
+      <geometry>
+        <box size="0.6 0.05 0.1"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.3 0 0" />
+    </visual>
+  </link>
+
+ 
+
+  <joint name="base_to_first" type="revolute">
+    <axis xyz="0 1 0" />
+    <limit effort="1000" lower="0" upper="3.14" velocity="0.5" />
+    <parent link="base_link"/>
+    <child link="first_segment"/>
+    <origin xyz="0 0 0.03" />
+  </joint>
+
+<joint name="first_to_second" type="revolute">
+    <axis xyz="0 1 0" />
+    <limit effort="1000" lower="0" upper="3.14" velocity="0.5" />
+    <parent link="first_segment"/>
+    <child link="second_segment"/>
+    <origin xyz="-0.6 0 0" />
+  </joint>
+
+</robot>
+
+```
 
 It quickly became apparent that having a ROS launch file for all the required nodes would be extremely helpful and would streamline the development process. Hence I produced a launch file including all nodes apart from the rosserial_python node; reason being that I was regularly updating the Arduino code and wanted to be able to stop and start this node separately.
+```
+<launch>
+	<arg name="model" />
+	<arg name="gui" default = "true" />
+	
+	<param name="robot_description" textfile="$(arg model)" />
+	<param name="use_gui" value="$(arg gui)" />
+
+	<node name="joint_state_publisher" pkg="joint_state_publisher"
+		type="joint_state_publisher" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher"
+		type="state_publisher" />
+	<node name="rviz" pkg="rviz" type="rviz" required="true" />
+</launch>
+	
+```
 
 #### The First Arm design - Lego Again
 In order to quickly begin prototyping the arm and its movement I 3D-Printed a set of 3 lego adapters for the 9g servos, consisting of a brick and a shaft adapter, for which I modelled the spline of the servo.
@@ -472,6 +538,69 @@ The adapters allowed me to attach lego gears to the servo directly in order to m
 ![Lego Servo Mounts](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181929.jpg)
 ![Turret Stepper](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181931.jpg)
 Issues with the mass of the arm segments quickly became apparent, with the servos struggling to make fine positional adjustments due to insufficient torque. Despite this, I was able to produce an accurate URDF for the first 2 segments and the base stepper of this arm. This allowed me to test the ROS Node on the Arduino with the servos in position and begin programming the stepper motor functionality.
+```
+<?xml version="1.0"?>
+<robot name="roco_arm">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.045" radius="0.085"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="arm_turret">
+    <visual>
+      <geometry>
+        <cylinder length="0.025" radius="0.068"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0.0175" />
+    </visual>
+  </link>
+
+  <link name="first_segment">
+    <visual>
+      <geometry>
+        <box size="0.095 0.032 0.032"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.06 0 0" />
+    </visual>
+  </link>
+
+  <link name="second_segment">
+    <visual>
+      <geometry>
+        <box size="0.075 0.032 0.032"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.034 0 0" />
+    </visual>
+  </link>
+
+ <joint name="turret_swivel" type="continuous">
+    <axis xyz="0 0 1" />
+    <parent link="base_link"/>
+    <child link="arm_turret"/>
+    <origin xyz="0 0 0.03" />
+  </joint>
+
+  <joint name="turret_to_first" type="revolute">
+    <axis xyz="0 1 0" />
+    <limit effort="1000" lower="0" upper="3.14" velocity="0.3" />
+    <parent link="arm_turret"/>
+    <child link="first_segment"/>
+    <origin xyz="0 0 0.0255" />
+  </joint>
+
+<joint name="first_to_second" type="revolute">
+    <axis xyz="0 1 0" />
+    <limit effort="1000" lower="-1.57" upper="1.57" velocity="0.3" />
+    <parent link="first_segment"/>
+    <child link="second_segment"/>
+    <origin xyz="-0.12 0 0" />
+  </joint>
+
+</robot>
+```
 
 #### The 3D-Printed Arm - A better solution
 To resolve the issues of lack of torque in the servos I decided to produce a more lightweight design that could be 3d printed. This design would also allow me to add the 3rd servo for the grabber attached to the end of the arm.
@@ -579,7 +708,89 @@ void loop() {
 }
 ```
 #### Adding the Grabber Joint and Issues with Serial connection speed
-Having successfully added the stepper motor with the initial 2 servos I ran into a new problem. When adding a 4th joint to the URDF to actuate the grabber servo, the arm became unresponsive. The default baud rate for the rosserial_python node is 57600bps. This may mean that the Joint messages are not being sent fast enough to transfer all the data before the other nodes update. My solution was to increase the baud rate to 115200bps, which seemed to resolve the issue. 
+Having successfully added the stepper motor with the initial 2 servos I ran into a new problem. When adding a 4th joint to the URDF to actuate the grabber servo, the arm became unresponsive. The default baud rate for the rosserial_python node is 57600bps. This may mean that the Joint messages are not being sent fast enough to transfer all the data before the other nodes update. My solution was to increase the baud rate to 115200bps, which seemed to resolve the issue.
+
+I created a 4-DOF URDF with the basic dimensions required to test the arm, but not yet fully accurate.
+```
+<?xml version="1.0"?>
+<robot name="roco_arm">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.045" radius="0.085"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <link name="arm_turret">
+    <visual>
+      <geometry>
+        <cylinder length="0.025" radius="0.068"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 0" />
+    </visual>
+  </link>
+
+  <link name="first_segment">
+    <visual>
+      <geometry>
+        <box size="0.095 0.032 0.032"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.0475 0 0" />
+    </visual>
+  </link>
+
+  <link name="second_segment">
+    <visual>
+      <geometry>
+        <box size="0.075 0.032 0.032"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="-0.0375 0 0" />
+    </visual>
+  </link>
+
+  <link name="grabber_1">
+     <visual>
+       <geometry>
+         <box size="0.045 0.005 0.005"/>
+       </geometry>
+       <origin rpy="0 0 0" xyz="-0.0175 0 0" />
+     </visual>
+  </link>
+
+ <joint name="turret_swivel" type="continuous">
+    <axis xyz="0 0 1" />
+    <parent link="base_link"/>
+    <child link="arm_turret"/>
+    <origin xyz="0 0 0.0175" />
+  </joint>
+
+  <joint name="turret_to_first" type="revolute">
+    <axis xyz="0 1 0" />
+    <limit effort="1000" lower="0" upper="3.14" velocity="0.1" />
+    <parent link="arm_turret"/>
+    <child link="first_segment"/>
+    <origin xyz="0 0 0.025" />
+  </joint>
+
+  <joint name="first_to_second" type="revolute">
+     <axis xyz="0 1 0" />
+     <limit effort="1000" lower="-1.57" upper="1.57" velocity="0.1" />
+     <parent link="first_segment"/>
+     <child link="second_segment"/>
+     <origin xyz="-0.095 0 0" />
+  </joint>
+
+  <joint name="second_to_grabber" type="revolute">
+     <axis xyz="0 1 0" />
+     <limit effort="1000" lower="0" upper="3.14" velocity="0.1" />
+     <parent link="second_segment"/>
+     <child link="grabber_1"/>
+     <origin xyz="-0.075 0 0" />
+  </joint>
+
+</robot>
+``` 
 
 
 
