@@ -183,10 +183,84 @@ This [link](https://youtu.be/K2EGBEzusm4) is to a video of the encoder and speed
 
 The motor's speed for a 12V, 3A input current averaged 2700rpm according to the encoder measurement. The motor would operate stably down to speeds of around 900rpm before the mechanical losses would cause unreliability and potentially stall the motor. At this speed, the motor would require a coil current of approx. 1.5A at 12V.
 
+I used the encoder to produce a graph of this motor's speed against coil current:
+![v4 Motor Characteristic Graph](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/v4%20motor%20graph.png)
+
 ## Speed Control with the Arduino
 
 The next step was to use these rpm measurements to develop some sort of closed loop control for the DC motor. This required the use of a L298P motor driver shield for the Arduino.
 
+To operate the L298P motor driver, a PWM input to the shield is required. This can be acheived using the analogWrite() function in Arduino; writing a value between 0 and 255 to set the duty cycle of the PWM.
+
+Initially, I wrote a simple piece of code that uses the value read by the encoder script, compares it to a fixed, desired RPM and increases or decreases the duty cycle accordingly in order to move the motor towards the desired speed.
+```
+/*#### DC Motor Control ####*/
+//Motor Driver definitions
+
+#define DIR_A 12
+#define DIR_B 13
+#define PWM_A 10
+#define PWM_B 11
+#define target_rpm 1350
+const byte ledPin = 13;
+const byte interruptPin = 2;
+
+unsigned long start_time;
+unsigned long stop_time;
+unsigned short PWM = 255;
+int n = 0;
+unsigned long period;
+unsigned long rpm;
+volatile byte state = LOW;
+
+void setup() {
+pinMode(ledPin, OUTPUT);
+pinMode(interruptPin, INPUT);
+pinMode(DIR_A, OUTPUT);
+//pinMode(PWM_A, OUTPUT);
+Serial.begin(9600);
+digitalWrite(DIR_A, LOW);
+analogWrite(PWM_A, PWM);
+/*### config interrupt callback for every lo-hi transition ###*/
+attachInterrupt(digitalPinToInterrupt(interruptPin), timer,
+RISING);
+}
+
+void loop() {
+  start_time = millis();
+  while (n<=5) {
+    digitalWrite(ledPin, state);
+  }
+  stop_time = millis();
+  n = 0;
+  period = ((stop_time - start_time)/5);
+  rpm = (60000/period);
+  n = 0;
+  if (rpm > target_rpm)
+  {
+    PWM = (PWM-2);
+  }
+  if (rpm <= target_rpm)
+  {
+    PWM = (PWM+10);
+  }
+  if (PWM > 255) {
+    PWM = 255;
+  }
+  analogWrite(PWM_A, PWM);
+  
+  Serial.print(PWM);
+  Serial.print("  ");
+  Serial.println(rpm);
+  
+}
+
+void timer() {
+ n++; 
+ state = !state;
+}
+```
+This script, using the rpm measurement, was not very effective and had no hysteresis to prevent the motor oscillating about its target rpm. I decided to modify the code to aim for a target time period, rather than rpm to improve the efficiency of the code.
 # Stepper Motors
 
 ## Stepper Motor Control
@@ -413,6 +487,9 @@ void writeMotor(int value, int PWM_PIN, int DIR_PIN) {
 }
 ```
 In this case the microstep resolution is 360 per step. This gives a total of 72000 steps per rotation as the motor has 200 full steps.
+
+Microstepping is far smoother and quieter than full or half stepping as the average current in the stepper coils is lower due to the sinusoidal nature of the input signal. In order to further limit the current in the coils I set the max pwm duty cycle to 50% in the sin/cos tables by setting the peak analogWrite value to 127.
+ 
 # Servo Arm Project
 
 ## First Steps - Interfacing Servos to the Arduino
@@ -669,7 +746,7 @@ Issues with the mass of the arm segments quickly became apparent, with the servo
 
   <joint name="turret_to_first" type="revolute">
     <axis xyz="0 1 0" />
-    <limit effort="1000" lower="0" upper="3.14" velocity="0.3" />
+    <limit effort="1000" lower="0" upper="1.05" velocity="0.3" />
     <parent link="arm_turret"/>
     <child link="first_segment"/>
     <origin xyz="0 0 0.0255" />
@@ -685,11 +762,15 @@ Issues with the mass of the arm segments quickly became apparent, with the servo
 
 </robot>
 ```
+In the URDF, the 2 servo joints are both revolute as per the example URDF file. However, the stepper joint is a continuous joint, as it can complete a full revolution of 360 degrees. Hence the limit tag is ommited from the description of that joint.
+
+Note also the fact that the angle limit on the turret to first joint is set to 0-1.05 radians. This is due to the lack of torque available from the servos making a reduction gear necessary for the arm to operate. The reduction ratio from the servo shaft to the arm segment was 3:1, hence reducing the range of movement to one third of the servo's range. The RViz visualisation would therefore remain accurate to the physical position of the arm. In the arduino code, I edited the map() functions used to convert the ROS message to a value in degrees to compensate for this reduction in range. The 0-1.05 rad. was still mapped to 0-180 degrees as per the other joints.
 
 #### The 3D-Printed Arm - A better solution
 To resolve the issues of lack of torque in the servos I decided to produce a more lightweight design that could be 3d printed. This design would also allow me to add the 3rd servo for the grabber attached to the end of the arm.
 
 A few reprints of parts for the design were required. The main issues initially encountered were the attachment of the servo to the turret, where the shaft on the arm segment could not be positioned due to a lack of clearance. This issue was solved by splitting the saddle where the shaft sits and adding a cap to keep the shaft in position. Also the teeth on the grabber gears were far too fine for the 3D-Printer and as a result would not engage and operate properly. I reprinted these with a coarser tooth pattern and a 20-degree helix angle to keep the gears engaged and prevent slippage.
+
 #### Programming for Stepper Motor Joint
 Adding additional servos to the Arduino was a relatively simple process thanks to the Servo library; simply writing a different value from the Joint State Publisher message array onto the PWM pin for the servo. The stepper motor, however, was a considerably more involved to implement.
 
@@ -875,6 +956,8 @@ I created a 4-DOF URDF with the basic dimensions required to test the arm, but n
 
 </robot>
 ``` 
+With this URDF, I was able to use all the degrees of freedom of the arm through rosserial. However, as can be zeen in [this]() demonstration, the arm was not quite matched to the pose of the RViz model, due to the positioning of the 3D printed components on the shafts of the servos. I decided to use the Joint State Publisher to put all the joints to their zero positons and then reposition the parts to reflect the RViz visualisation.
 
+The next step was to try and use the stl meshes from the 3D model to create a visualisation in RViz. Whilst I was able to produce an accurately dimensioned URDF, I was unable to load the meshes through the URDF. 
 
 
