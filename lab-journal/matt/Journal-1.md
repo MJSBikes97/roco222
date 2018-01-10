@@ -532,6 +532,42 @@ void loop() {
 The servos were wired up using a breadboard to allow use of common power rails for both servos.
 ![Servo Setup on Breadboard](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171109_113049.jpg)
 This code does not give a smooth sinusoidal movement of the servo shaft, however it does allow the servos to be quickly tested.
+### Sinusoidal Movement
+In order to acheive sinusoidal movement of the servo shaft a table of values to be written to the servo is required. I created this table using the arduino sin function with 157 array positions. This gives a resolution of 0.01 radians per write as the range of the servo is 0 to 180 degrees. The script steps through these array positions, writing each to the servo with a time delay between each to set the slew rate of the servo.
+
+```
+/*### Sinusoidal Servo Movement ###*/
+#include <Servo.h>
+#define servo_pin 5
+
+Servo servo1;
+unsigned int sin_table[157];
+float sin_input = 0.0f;
+
+void setup() {
+  Serial.begin(9600);
+  //Generate Sin table of angle values 0-180 (1.57rad)
+  for (int n = 0; n<=156; n++) {
+    sin_table[n] = (180u*sin(sin_input));
+    sin_input = sin_input+0.01f; //Increment radians
+  }
+ servo1.attach(servo_pin); //enable servo
+}
+
+void loop() {
+  //Write 0 to
+  for (int n = 0; n<157; n++) {
+    servo1.write(sin_table[n]);
+    Serial.println(sin_table[n]);
+    delay(5);
+  }
+  for (int n = 0; n<157; n++) {
+    servo1.write(180-sin_table[n]);
+    Serial.println(180-sin_table[n]);
+    delay(5);
+  }
+}
+```
 
 ### Controlling the servos with potentiometers
 
@@ -781,7 +817,16 @@ As I was using an Arduino ATmega2560-based development board I decided to use so
 
 Using the timer interrupt, the stepper could be moved towards a target position whilst the servos were being moved independently, the target being updated by each ROS callback function. Hence the issue with the stepper preventing the servos from updated was resolved.
 
-The A4988 Stepper Driver used in this board has 3 mode select pins and a current limiting potentiometer. For the purpose of this arm I set the current limit to 500mA and connected all the mode pins high so that a 16 microstep-per-step resolution was set. This required mapping of the Joint_State message value to between -1600 and 1600 as the motor has 200 steps-per-revolution. The Arduino sketch for the node is shown below:
+The A4988 Stepper Driver used in this board has 3 mode select pins and a current limiting potentiometer. These are the mode select pin combinations for the driver:
+|MS1|MS2|MS3|Resolution|
+|:--:|:--:|:--:|---|
+|0|0|0|Full Step|
+|1|0|0|Half Step|
+|0|1|0|Quarter Step| 
+|1|1|0|Eighth Step|
+|1|1|1|Sixteenth Step|
+    
+For the purpose of this arm I set the current limit to 500mA and connected all the mode pins high so that a 16 microstep-per-step resolution was set. This required mapping of the Joint_State message value to between -1600 and 1600 as the motor has 200 steps-per-revolution. The Arduino sketch for the node is shown below:
 ```
 #include <ros.h>
 //Library to describe message datatypes for joint_state topic
@@ -956,7 +1001,7 @@ I created a 4-DOF URDF with the basic dimensions required to test the arm, but n
 
 </robot>
 ``` 
-With this URDF, I was able to use all the degrees of freedom of the arm through rosserial. However, as can be zeen in [this]() demonstration, the arm was not quite matched to the pose of the RViz model, due to the positioning of the 3D printed components on the shafts of the servos. I decided to use the Joint State Publisher to put all the joints to their zero positons and then reposition the parts to reflect the RViz visualisation.
+With this URDF, I was able to use all the degrees of freedom of the arm through rosserial. However, as can be zeen in [this](https://youtu.be/F1CXv6m4E78) demonstration, the arm was not quite matched to the pose of the RViz model, due to the positioning of the 3D printed components on the shafts of the servos. I decided to use the Joint State Publisher to put all the joints to their zero positons and then reposition the parts to reflect the RViz visualisation.
 
 The next step was to try and use the stl meshes from the 3D model to create a visualisation in RViz. Whilst I was able to produce an accurately dimensioned URDF, I was unable to load the meshes through the URDF. 
 
