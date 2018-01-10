@@ -1,4 +1,5 @@
-# My First Lab Journal (25/09)
+# ROCO222 Lab Journal
+Matthew Shaw - 10548340
 ## Introduction
 
 This journal is written using the markdown syntax.
@@ -69,15 +70,19 @@ In order to rapidly prototype a more reliable motor, I decided to use lego techn
 
 Also, unlike a 3D-Printed prototype, a lego design is not limited by the long print times; The protoype could be completely rebuilt in minutes.
 
-As a first prototype, I produced a single coil armature with only 60 turns and an average diameter of 35mm. This was connected to a separate commutator.
+As a first prototype, I produced a single coil armature with only 60 turns and an average diameter of 35mm. This was connected to a separate commutator. The coil resistance was again measured at 5 ohms.
 
 ![Motor V2](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG-20171012-WA0000.jpg)
 
-The brushes are a spring-arm design that have copper tape contacts on the end with connecting leads soldered to them. I have found during extended running periods that these contacts wear out very quickly; a design change will be needed.
+The brushes are a spring-arm design that have copper tape contacts on the end with connecting leads soldered to them. I found that during extended running periods that these contacts wear out very quickly; a design change was needed.
 
 ![Brushes](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG-20171012-WA0002.jpg)
 
-I found that with some light lubrication, this motor runs at a very stable RPM for extended periods, however, I feel that greater reliability and performance may be gained from adding a second coil.
+I found that with some light lubrication, this motor runs at a very stable RPM for extended periods, however, I feel that greater reliability and performance may be gained from adding a second coil. The motor can be seen [here](https://youtu.be/CTOZp_LgISQ) running with a 12V, 4A DC supply
+
+The main issue with this motor was the cogging effect due to the small period where force is applied to the armature (and hence torque generated) during each rotation of the motor shaft.
+
+The effect can be seen in [this](https://youtu.be/0WgSKoiiXSg) slow-motion clip.
 
 ## Motor v3 - Further Improvements
 
@@ -90,10 +95,14 @@ The remainder of the construction was broadly the same as before.
 The additional coils reduced the cogging effect when the motor was operating, however the motor was not self starting. This was because, when powered up, the first coil aligned horizontally with the magnetic field would provide force to move the armature the first 45-degrees, but would then have moved out of the magnetic field. This would cause the motor to stall with both coils at 45-degree angles from the magnetic field due to a lack of armature momentum. The armature would stall before the second coil was connected to the supply by the commutator, hence a manual start was always required by pushing the flywheel connected to the armature.
 ## Motor v4 - Self-Starting and Improved Brushes
 
-To improve the  motor performance I decided to add a third coil. This allowed the motor to be self starting as a certain percentage of the maximum force applied to the coils is always applied to 2 of the 3 coils. This means the motor cannot be stalled if 
+To improve the  motor performance I decided to add a third coil. This allowed the motor to be self starting as a certain percentage of the maximum force applied to the coils is always applied to 2 of the 3 coils. This means the motor cannot be stalled at startup as the force on the armature is always imbalanced.
 ![3-Coil Armature](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_122936.jpg)
 ![Armature Windings](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_122952.jpg)
 The arrangement of the coils is such that two coils are connected in series between the poles of the commutator. The position of the magnets was also adjusted due to the reduction in the OD of the coil rotor. Each coil has a turn count of 80 and are separated at 120 degree increments.
+
+All 3 Coils of the armature are in fact connected together in series. The pads on the commutator are arranged such that each one is connected as a center tap between two of the coils. This arrangement gave a coil resistance of 3.3 ohms between each pad, as I used a thicker gauge of enameled wire which has a lower resistivity. This gave a greater coil current for the same supply voltage.
+
+As the torque of the motor is directly proportional to the product of current and number of turns, the increase in both of these parameters in the v4 design, the motor ran at a significantly higher RPM compared to to the 2-coil design as the mechanical losses in the motor were very similar.
 ![v4 Motor Internals](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_123156.jpg)
 This motor also uses exposed multicore wire brushes instead of strips of copper tape as this was found to give greater reliability. The copper tape would wear through very quickly and  cause the motor to fail. 
 ![v4 Brushes](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_123205.jpg)
@@ -102,10 +111,31 @@ Testing showed that this motor had significantly improved performance compared t
 
 ## Adding the Incremental Encoder
 
-I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc to give input to the encoder.
+I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc with a cutout to give input to the encoder.
 ```
+const byte ledPin = 13;
+const byte interruptPin = 2;
+volatile byte state = LOW;
 
+void setup() {
+pinMode(ledPin, OUTPUT);
+pinMode(interruptPin, INPUT);
+
+/*### config interrupt callback for every lo-hi transition ###*/
+attachInterrupt(digitalPinToInterrupt(interruptPin), blink,
+RISING);
+}
+
+void loop() {
+digitalWrite(ledPin, state);
+
+}
+
+void blink() {
+  state = !state;
+}
 ```
+This basic script inverts the LED every time a rising edge is detected from the encoder, hence the LED blinks at half the frequency of rotation.
 ## Speed Measurement
 To measure the RPM of the motor, I used 10 pulse edges of the encoder and the Arduino millis() function to time the period of 10 rotations. I used the interrupt service routine to increment the rotation counter as well as inverting the LED state as per the previous script.
 
@@ -151,10 +181,15 @@ void timer() {
 ```
 This [link](https://youtu.be/K2EGBEzusm4) is to a video of the encoder and speed measurement script all working, including the oscilloscope trace of the output from the incremental encoder.
 
+The motor's speed for a 12V, 3A input current averaged 2700rpm according to the encoder measurement. The motor would operate stably down to speeds of around 900rpm before the mechanical losses would cause unreliability and potentially stall the motor. At this speed, the motor would require a coil current of approx. 1.5A at 12V.
+
 ## Speed Control with the Arduino
 
 The next step was to use these rpm measurements to develop some sort of closed loop control for the DC motor. This required the use of a L298P motor driver shield for the Arduino.
-# Stepper Motor Control
+
+# Stepper Motors
+
+## Stepper Motor Control
 
 Having wired the stepper motor to the Arduino motor shield as per the Lab Sheet I programmed the Arduino with a code similar to the example given in lectures but with a few functions included to compact the main loop and simplify the later tasks.
 ![Stepper Motor Wiring](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171102_112640.jpg)
@@ -310,7 +345,7 @@ void halfStep() {
 ```
 
 ## Microstepping
-My Microstepping code generates a table of sine and cosine PWM values that can be used in the analogWrite() function in Arduino. The tables are stored as an array, the code then writes the corresponding positions from the arrays to the two coils of the stepper, putting each coil voltage 90 degrees out of phase with each other. By increasing the number of data points in the arrays, the resolution of the microsteps-per-step increases. The code snippet below shows the microstepping routine:
+My Microstepping code generates tables of sine and cosine PWM values that can be used in the analogWrite() function in Arduino. The tables are stored as arrays. The code then writes the corresponding positions from the arrays to the two coils of the stepper, putting each coil voltage 90 degrees out of phase with each other. By increasing the number of data points in the arrays, the resolution of the microsteps-per-step increases. The code snippet below shows the microstepping routine:
 ```
 /*## Definitions ##*/
 
