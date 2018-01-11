@@ -805,6 +805,13 @@ Note also the fact that the angle limit on the turret to first joint is set to 0
 #### The 3D-Printed Arm - A better solution
 To resolve the issues of lack of torque in the servos I decided to produce a more lightweight design that could be 3d printed. This design would also allow me to add the 3rd servo for the grabber attached to the end of the arm.
 
+I designed the 3D model of the arm in Autodesk Inventor Professional 2017 and the components were printed in PLA on a Prusa i3 Mk2S 3D Printer. Some renders of the design are shown here:
+![Arm model view 1](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2%20_1.png)
+![Arm model view 2](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2%20_1.png)
+![Arm model view 3](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2_3.png)
+
+This [animation](https://youtu.be/-w9rDTAw4_c) of the CAD model shows how the arm is assembled and all the component parts that have been 3D printed, as well as the 9g servos and stepper motor.
+
 A few reprints of parts for the design were required. The main issues initially encountered were the attachment of the servo to the turret, where the shaft on the arm segment could not be positioned due to a lack of clearance. This issue was solved by splitting the saddle where the shaft sits and adding a cap to keep the shaft in position. Also the teeth on the grabber gears were far too fine for the 3D-Printer and as a result would not engage and operate properly. I reprinted these with a coarser tooth pattern and a 20-degree helix angle to keep the gears engaged and prevent slippage.
 
 #### Programming for Stepper Motor Joint
