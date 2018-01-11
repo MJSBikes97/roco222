@@ -46,7 +46,7 @@ As seen below, hashtags are used to create various sizes of header (more hastags
 * returns info abou the machine's CPU
 
 ## Uploading to GitHub Repository
-
+I created my roco222 repository on github by running th git init command in the folder in my local directory then committing the Journal. I then pushed the journal to github usung the git push command in the terminal.
 ## Hacking into the Robot
 Knowing that the robot's name was Chapman, we used the terminal commang "ping chapman" to retrieve the IP adress for the robot.
 
