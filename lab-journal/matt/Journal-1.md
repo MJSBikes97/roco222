@@ -831,6 +831,47 @@ Adding additional servos to the Arduino was a relatively simple process thanks t
 Initially, I opted to use a basic motor driver shield that I had for my Arduino, which used and L298p H-bridge like the official Arduino shields. The board was the same as that which I had used for the microstepping development task. This presented a problem due to the rate at which the stepper motor must be written to whilst microstepping in order to operate correctly. The number of writes and delays between the writes was slowing down the ROS callback function to the extent that the servo response to the joint state publisher would be very delayed and jerky. I had to find an alternative solution.
 ![The L298P Driver Board](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181936.jpg)
 
+These two functions were used to position the stepper. As can be seen, the function runMotor() contains blocking delays and due to the step resolution, these delays built up very quickly to slow down the response of the ROS node. 
+```
+void runMotor(int dir) {
+  if (dir == Fwd) {
+    writeMotor(a[idxG], PWM_A, DIR_A);
+    writeMotor(b[idxG], PWM_B, DIR_B);
+  
+    idxG++;
+    if (idxG == usteps) {
+      idxG = 0;
+      steps++;
+    }
+    delayMicroseconds(pulseDelay_us);
+  } else {
+    writeMotor(b[idxG], PWM_A, DIR_A);
+    writeMotor(a[idxG], PWM_B, DIR_B);
+  
+     idxG++;
+    if (idxG == usteps) {
+      idxG = 0;
+      steps--;
+    }
+    delayMicroseconds(pulseDelay_us);
+  }
+}
+
+void positionStepper(int target_step) {
+  if (target_step > steps) {
+    while (steps != target_step) {
+      runMotor(Fwd);
+    }
+  } else {
+    while (steps != target_step) {
+      runMotor(Rev);
+    }
+  }
+  delay(100);
+  analogWrite(PWM_A, 0);
+  analogWrite(PWM_B, 0);
+}
+```
 As I was using an Arduino ATmega2560-based development board I decided to use some of its additional hardware timers that are not used by the Servo.h library to generate a timer interrupt for stepping the motor. To make the interrupt rountine simpler I also switched to a different motor driver board specifically for driving stepper motors. It has two input pins from the Arduino; a direction pin and a step pin. The step pin will respond to a rising edge of a digital write.
 
 ![A4988 Stepper Board](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180110_193427.jpg)
