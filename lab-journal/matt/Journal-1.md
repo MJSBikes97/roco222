@@ -822,6 +822,8 @@ Shown below are images of the final assembled arm design, connected up to the Ar
 ![Arm Final 1](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005318.jpg)
 ![Arm Final 2](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005331.jpg)
 ![Arm Final 3](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005350.jpg)
+![Arm Final 4](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2_4.png)
+![Arm Final 5](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2_5.png)
 
 #### Programming for Stepper Motor Joint
 Adding additional servos to the Arduino was a relatively simple process thanks to the Servo library; simply writing a different value from the Joint State Publisher message array onto the PWM pin for the servo. The stepper motor, however, was a considerably more involved to implement.
