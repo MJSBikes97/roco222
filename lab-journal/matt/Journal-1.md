@@ -112,6 +112,9 @@ Testing showed that this motor had significantly improved performance compared t
 ## Adding the Incremental Encoder
 
 I soldered the encoder board as per the Lab Sheet and tested its output using an oscilloscope. The encoder gave a satisfactory output, so I began mounting the encoder to the motor chassis and made a disc with a cutout to give input to the encoder.
+
+![Encoder and Disc](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180109_164135.jpg)
+
 ```
 const byte ledPin = 13;
 const byte interruptPin = 2;
@@ -814,6 +817,12 @@ This [animation](https://youtu.be/-w9rDTAw4_c) of the CAD model shows how the ar
 
 A few reprints of parts for the design were required. The main issues initially encountered were the attachment of the servo to the turret, where the shaft on the arm segment could not be positioned due to a lack of clearance. This issue was solved by splitting the saddle where the shaft sits and adding a cap to keep the shaft in position. Also the teeth on the grabber gears were far too fine for the 3D-Printer and as a result would not engage and operate properly. I reprinted these with a coarser tooth pattern and a 20-degree helix angle to keep the gears engaged and prevent slippage.
 
+Shown below are images of the final assembled arm design, connected up to the Arduino:
+
+![Arm Final 1](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005318.jpg)
+![Arm Final 2](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005331.jpg)
+![Arm Final 3](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005350.jpg)
+
 #### Programming for Stepper Motor Joint
 Adding additional servos to the Arduino was a relatively simple process thanks to the Servo library; simply writing a different value from the Joint State Publisher message array onto the PWM pin for the servo. The stepper motor, however, was a considerably more involved to implement.
 
@@ -821,6 +830,8 @@ Initially, I opted to use a basic motor driver shield that I had for my Arduino,
 ![The L298P Driver Board](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20171215_181936.jpg)
 
 As I was using an Arduino ATmega2560-based development board I decided to use some of its additional hardware timers that are not used by the Servo.h library to generate a timer interrupt for stepping the motor. To make the interrupt rountine simpler I also switched to a different motor driver board specifically for driving stepper motors. It has two input pins from the Arduino; a direction pin and a step pin. The step pin will respond to a rising edge of a digital write.
+
+![A4988 Stepper Board](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180110_193427.jpg)
 
 Using the timer interrupt, the stepper could be moved towards a target position whilst the servos were being moved independently, the target being updated by each ROS callback function. Hence the issue with the stepper preventing the servos from updated was resolved.
 
@@ -832,6 +843,10 @@ The A4988 Stepper Driver used in this board has 3 mode select pins and a current
 |0|1|0|Quarter Step| 
 |1|1|0|Eighth Step|
 |1|1|1|Sixteenth Step|
+
+A close up of the wiring for the A4988 board is shown here:
+
+![A4988 Connections](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180110_194402.jpg)
     
 For the purpose of this arm I set the current limit to 500mA and connected all the mode pins high so that a 16 microstep-per-step resolution was set. This required mapping of the Joint_State message value to between -1600 and 1600 as the motor has 200 steps-per-revolution. The Arduino sketch for the node is shown below:
 ```
@@ -926,6 +941,10 @@ void loop() {
 ```
 #### Adding the Grabber Joint and Issues with Serial connection speed
 Having successfully added the stepper motor with the initial 2 servos I ran into a new problem. When adding a 4th joint to the URDF to actuate the grabber servo, the arm became unresponsive. The default baud rate for the rosserial_python node is 57600bps. This may mean that the Joint messages are not being sent fast enough to transfer all the data before the other nodes update. My solution was to increase the baud rate to 115200bps, which seemed to resolve the issue.
+
+The connections to the Arduino Mega for the now complete arm are shown here:
+
+![Arm Connections Final](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/IMG_20180111_005411.jpg)
 
 I created a 4-DOF URDF with the basic dimensions required to test the arm, but not yet fully accurate.
 ```
