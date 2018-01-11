@@ -568,7 +568,7 @@ void loop() {
   }
 }
 ```
-
+This [video](https://youtu.be/fyBfl8O2zho) shows the servo performing sinusoidal movement.
 ### Controlling the servos with potentiometers
 
 To control the servos with potentiometers I once again used the Arduino servo library and the Arduino 'map' function. This allowed me to map the ADC inputs of 0 to 1023 to the 0 to 180 degree values of the 'servo.write' function. I also set up the USB serial monitor to confirm the ADC values were being recieved correctly.
@@ -806,7 +806,7 @@ Note also the fact that the angle limit on the turret to first joint is set to 0
 To resolve the issues of lack of torque in the servos I decided to produce a more lightweight design that could be 3d printed. This design would also allow me to add the 3rd servo for the grabber attached to the end of the arm.
 
 I designed the 3D model of the arm in Autodesk Inventor Professional 2017 and the components were printed in PLA on a Prusa i3 Mk2S 3D Printer. Some renders of the design are shown here:
-![Arm model view 1](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2%20_1.png)
+![Arm model view 1](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2%20_2.png)
 ![Arm model view 2](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2%20_1.png)
 ![Arm model view 3](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/Arm%20assembly%20v2_3.png)
 
