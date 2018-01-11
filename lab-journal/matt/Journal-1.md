@@ -836,13 +836,8 @@ As I was using an Arduino ATmega2560-based development board I decided to use so
 Using the timer interrupt, the stepper could be moved towards a target position whilst the servos were being moved independently, the target being updated by each ROS callback function. Hence the issue with the stepper preventing the servos from updated was resolved.
 
 The A4988 Stepper Driver used in this board has 3 mode select pins and a current limiting potentiometer. These are the mode select pin combinations for the driver:
-|MS1|MS2|MS3|Resolution|
-|:--:|:--:|:--:|---|
-|0|0|0|Full Step|
-|1|0|0|Half Step|
-|0|1|0|Quarter Step| 
-|1|1|0|Eighth Step|
-|1|1|1|Sixteenth Step|
+
+![A4988 Truth Table](https://github.com/MJSBikes97/roco222/blob/master/lab-journal/matt/A4988-Truth-Table1-300x227.png)
 
 A close up of the wiring for the A4988 board is shown here:
 
